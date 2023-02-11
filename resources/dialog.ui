@@ -275,6 +275,25 @@ background-image: url(:/res/right_arrow_pressed.png);
         </widget>
        </item>
        <item>
+        <widget class="QToolButton" name="check_none">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>75</width>
+           <height>26</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Sync Files</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label_3">
          <property name="text">
           <string/>

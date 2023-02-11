@@ -34,6 +34,8 @@ from . import model_item_data
 
 from .ui.dialog import Ui_Dialog
 
+logger = sgtk.platform.get_logger(__name__)
+
 # import frameworks
 shotgun_model = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_model"
