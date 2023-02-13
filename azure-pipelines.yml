@@ -44,5 +44,5 @@ jobs:
     has_ui_tests: true
     additional_repositories:
     - name: tk-framework-qtwidgets
-    - name: tk-framework-shotgunutils
+    - name: tk-swc-framework-shotgunutils
     - name: tk-shell

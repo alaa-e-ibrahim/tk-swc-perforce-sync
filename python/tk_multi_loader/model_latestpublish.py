@@ -18,7 +18,7 @@ from . import model_item_data
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_model"
+    "tk-swc-framework-shotgunutils", "shotgun_model"
 )
 ShotgunModel = shotgun_model.ShotgunModel
 
@@ -221,6 +221,8 @@ class SgLatestPublishModel(ShotgunModel):
         :param item: ShotgunStandardItem associated with the publish.
         :param sg_item: Publish information from Shotgun.
         """
+
+        # self._log_debug(">>>>>>>>>>>> _set_tooltip: sg_item: {}".format(sg_item))
         tooltip = "<b>Name:</b> %s" % (sg_item.get("code") or "No name given.")
 
         # Version 012 by John Smith at 2014-02-23 10:34
@@ -251,6 +253,9 @@ class SgLatestPublishModel(ShotgunModel):
         )
         tooltip += "<br><br><b>Description:</b> %s" % (
             sg_item.get("description") or "No description given."
+        )
+        tooltip += "<br><br><b>Revision:</b> %s" % (
+                sg_item.get("revision") or "N/A"
         )
 
         item.setToolTip(tooltip)

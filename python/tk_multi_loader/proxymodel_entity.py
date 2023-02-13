@@ -14,7 +14,7 @@ from sgtk.platform.qt import QtCore, QtGui
 from . import constants
 
 shotgun_model = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_model"
+    "tk-swc-framework-shotgunutils", "shotgun_model"
 )
 
 

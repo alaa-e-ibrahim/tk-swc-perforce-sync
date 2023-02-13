@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from sgtk.platform.qt import QtCore, QtGui
+from tank.platform.qt5 import QtWidgets
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -226,20 +227,53 @@ class Ui_Dialog(object):
         self.publish_view.setObjectName("publish_view")
         self.horizontalLayout_7.addWidget(self.publish_view)
         self.middle_area.addWidget(self.publish_frame)
+
+        self.label_8 = QtGui.QLabel(Dialog)
+        self.label_8.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_8.setObjectName("label_8")
+        self.label_8.setMinimumHeight(5)
+        self.label_8.setMaximumHeight(5)
+        self.middle_area.addWidget(self.label_8)
+
+        self.horizontalLayout_8 = QtGui.QHBoxLayout()
+        self.horizontalLayout_8.setObjectName("horizontalLayout_8")
+        self.log_window = QtWidgets.QTextBrowser()
+        self.log_window.verticalScrollBar().setValue(self.log_window.verticalScrollBar().maximum())
+        self.log_window.setMinimumHeight(187)
+        self.log_window.setMaximumHeight(187)
+        # self.log_window.setMinimumSize(QtCore.QSize(100, 100))
+        self.horizontalLayout_8.addWidget(self.log_window)
+        self.middle_area.addLayout(self.horizontalLayout_8)
+
         self.horizontalLayout_4 = QtGui.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.show_sub_items = QtGui.QCheckBox(Dialog)
         self.show_sub_items.setObjectName("show_sub_items")
         self.horizontalLayout_4.addWidget(self.show_sub_items)
-        self.sync_files = QtGui.QToolButton(Dialog)
+        # self.show_sub_items.hide()
+        self.get_latest_revision = QtGui.QToolButton(Dialog)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sync_files.sizePolicy().hasHeightForWidth())
-        self.sync_files.setSizePolicy(sizePolicy)
-        self.sync_files.setMinimumSize(QtCore.QSize(75, 26))
-        self.sync_files.setObjectName("check_none")
-        self.horizontalLayout_4.addWidget(self.sync_files)
+        sizePolicy.setHeightForWidth(self.get_latest_revision.sizePolicy().hasHeightForWidth())
+        self.get_latest_revision.setSizePolicy(sizePolicy)
+        self.get_latest_revision.setMinimumSize(QtCore.QSize(120, 26))
+        self.get_latest_revision.setObjectName("check_none")
+
+        self.progress = QtGui.QProgressBar()
+        self.progress.setMaximumHeight(20)
+        self.progress.setMinimumWidth(350)
+        self.progress.setMaximumWidth(350)
+        self.progress.setRange(0, 100)
+        # self.progress.setFormat("")
+        self.progress.setVisible(False)
+
+        # sp_retain = self.progress.sizePolicy()
+        # sp_retain.setRetainSizeWhenHidden(True)
+        # self.progress.setSizePolicy(sp_retain)
+
+        self.horizontalLayout_4.addWidget(self.get_latest_revision)
+        self.horizontalLayout_4.addWidget(self.progress)
         spacerItem1 = QtGui.QSpacerItem(128, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem1)
         self.scale_label = QtGui.QLabel(Dialog)
@@ -364,7 +398,8 @@ class Ui_Dialog(object):
         Dialog.setTabOrder(self.navigation_prev, self.navigation_next)
         Dialog.setTabOrder(self.navigation_next, self.publish_type_list)
         Dialog.setTabOrder(self.publish_type_list, self.show_sub_items)
-        Dialog.setTabOrder(self.show_sub_items, self.thumb_scale)
+        Dialog.setTabOrder(self.show_sub_items, self.get_latest_revision)
+        Dialog.setTabOrder(self.get_latest_revision, self.thumb_scale)
         Dialog.setTabOrder(self.thumb_scale, self.history_view)
 
     def retranslateUi(self, Dialog):
@@ -382,7 +417,7 @@ class Ui_Dialog(object):
         self.publish_type_list.setAccessibleName(QtGui.QApplication.translate("Dialog", "publish_type_list", None, QtGui.QApplication.UnicodeUTF8))
         self.check_all.setText(QtGui.QApplication.translate("Dialog", "Select All", None, QtGui.QApplication.UnicodeUTF8))
         self.check_none.setText(QtGui.QApplication.translate("Dialog", "Select None", None, QtGui.QApplication.UnicodeUTF8))
-        self.sync_files.setText(QtGui.QApplication.translate("Dialog", "Sync Files", None, QtGui.QApplication.UnicodeUTF8))
+        self.get_latest_revision.setText(QtGui.QApplication.translate("Dialog", "Get Latest Revision", None, QtGui.QApplication.UnicodeUTF8))
         self.cog_button.setToolTip(QtGui.QApplication.translate("Dialog", "Tools and Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.cog_button.setAccessibleName(QtGui.QApplication.translate("Dialog", "cog_button", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_breadcrumbs.setToolTip(QtGui.QApplication.translate("Dialog", "This <i>breadcrumbs listing</i> shows your currently selected ShotGrid location.", None, QtGui.QApplication.UnicodeUTF8))
@@ -400,6 +435,7 @@ class Ui_Dialog(object):
         self.show_sub_items.setToolTip(QtGui.QApplication.translate("Dialog", "Enables the <i>subfolder mode</i>, displaying a total aggregate of all selected items.", None, QtGui.QApplication.UnicodeUTF8))
         self.show_sub_items.setAccessibleName(QtGui.QApplication.translate("Dialog", "show_sub_items", None, QtGui.QApplication.UnicodeUTF8))
         self.show_sub_items.setText(QtGui.QApplication.translate("Dialog", "Show items in subfolders", None, QtGui.QApplication.UnicodeUTF8))
+        # self.label_8.setText(QtGui.QApplication.translate("Dialog", "<small>Progress</small>", None, QtGui.QApplication.UnicodeUTF8))
         self.thumb_scale.setToolTip(QtGui.QApplication.translate("Dialog", "Use this handle to <i>adjust the size</i> of the displayed thumbnails.", None, QtGui.QApplication.UnicodeUTF8))
         self.thumb_scale.setAccessibleName(QtGui.QApplication.translate("Dialog", "thumb_scale", None, QtGui.QApplication.UnicodeUTF8))
         self.details_image.setAccessibleName(QtGui.QApplication.translate("Dialog", "details_image", None, QtGui.QApplication.UnicodeUTF8))

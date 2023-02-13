@@ -12,6 +12,8 @@
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
+#from tank.platform.qt5 import QtWidgets
+
 
 from .model_hierarchy import SgHierarchyModel
 from .model_entity import SgEntityModel
@@ -38,9 +40,9 @@ logger = sgtk.platform.get_logger(__name__)
 
 # import frameworks
 shotgun_model = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_model"
+    "tk-swc-framework-shotgunutils", "shotgun_model"
 )
-settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
+settings = sgtk.platform.import_framework("tk-swc-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 overlay_widget = sgtk.platform.import_framework(
     "tk-framework-qtwidgets", "overlay_widget"
@@ -49,10 +51,10 @@ shotgun_search_widget = sgtk.platform.import_framework(
     "tk-framework-qtwidgets", "shotgun_search_widget"
 )
 task_manager = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "task_manager"
+    "tk-swc-framework-shotgunutils", "task_manager"
 )
 shotgun_globals = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_globals"
+    "tk-swc-framework-shotgunutils", "shotgun_globals"
 )
 
 ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
@@ -79,6 +81,9 @@ class AppDialog(QtGui.QWidget):
         :param parent:          The parent QWidget for this control
         """
         QtGui.QWidget.__init__(self, parent)
+        # self.app = QtWidgets.QApplication.instance()
+
+
         self._action_manager = action_manager
 
         # The loader app can be invoked from other applications with a custom
@@ -107,7 +112,9 @@ class AppDialog(QtGui.QWidget):
         # set up the UI
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-
+        #################################################
+        # Perforce
+        self._p4 = None
         #################################################
         # maintain a list where we keep a reference to
         # all the dynamic UI we create. This is to make
@@ -288,7 +295,8 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # checkboxes, buttons etc
-        self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
+        self.ui.get_latest_revision.clicked.connect(self._on_get_latest_revision)
+        # self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
 
         self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
         self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
@@ -814,6 +822,10 @@ class AppDialog(QtGui.QWidget):
                     task_status_str = self._status_model.get_long_name(task_status_code)
                     msg += __make_table_row("Review", task_status_str)
 
+                if sg_item.get("revision"):
+                    revision = sg_item.get("revision")
+                    msg += __make_table_row("Revision ", revision)
+
                 self.ui.details_header.setText("<table>%s</table>" % msg)
 
                 # tell details pane to load stuff
@@ -986,6 +998,8 @@ class AppDialog(QtGui.QWidget):
         else:
             self._publish_main_overlay.hide()
 
+
+
     def _on_show_subitems_toggled(self):
         """
         Triggered when the show sub items checkbox is clicked
@@ -1017,6 +1031,7 @@ class AppDialog(QtGui.QWidget):
         # tell publish UI to update itself
         item = self._get_selected_entity()
         self._load_publishes_for_entity_item(item)
+        # self._get_perforce_summary()
 
     def _on_thumb_size_slider_change(self, value):
         """
@@ -1073,6 +1088,146 @@ class AppDialog(QtGui.QWidget):
             if default_action:
                 default_action.trigger()
 
+    def _on_get_latest_revision(self):
+        """
+        When someone clicks on the "Get Latest Revision" button
+        """
+        self._connect()
+        files_to_sync, total_file_count = self._get_peforce_data()
+        files_to_sync_count = len(files_to_sync)
+        if files_to_sync_count == 0:
+            msg = "\n <span style='color:#2C93E2'>No Need to sync</span> \n"
+            self._add_log(msg, 2)
+
+        elif files_to_sync_count > 0:
+            msg = "\n <span style='color:#2C93E2'>Syncing {} files ... </span> \n".format(files_to_sync_count)
+            self._add_log(msg, 2)
+            self._get_latest_revision(files_to_sync)
+            msg = "\n <span style='color:#2C93E2'>Syncing files is complete</span> \n"
+            self._add_log(msg, 2)
+            msg = "\n <span style='color:#2C93E2'>Reloading data ...</span> \n"
+            self._add_log(msg, 2)
+            self._status_model.hard_refresh()
+            self._publish_history_model.hard_refresh()
+            # self._publish_type_model.hard_refresh()
+            self._publish_model.hard_refresh()
+            for p in self._entity_presets:
+                self._entity_presets[p].model.hard_refresh()
+            self._setup_details_panel([])
+            self._get_perforce_summary()
+
+            msg = "\n <span style='color:#2C93E2'>Reloading data is complete</span> \n"
+            self._add_log(msg, 2)
+
+
+    def _get_perforce_summary(self):
+        """
+        When someone clicks on the "Get Latest Revision" button
+        """
+        self._connect()
+        files_to_sync, total_file_count = self._get_peforce_data()
+        files_to_sync_count = len(files_to_sync)
+        if files_to_sync_count == 0:
+            msg = "\n <span style='color:#2C93E2'>No Need to sync</span> \n"
+            self._add_log(msg, 2)
+
+        elif files_to_sync_count > 0:
+            msg = "\n <span style='color:#2C93E2'>Need to sync {} files</span> \n".format(files_to_sync_count)
+            self._add_log(msg, 2)
+
+    ########################################################################################
+
+    # Perforce connection, Sync, and related GUI items
+    def _get_peforce_data(self):
+        """
+        Get lastest revision
+        :return:
+        """
+        total_file_count = 0
+        files_to_sync = []
+
+        model = self.ui.publish_view.model()
+        for row in range(model.rowCount()):
+            model_index = model.index(row, 0)
+            proxy_model = model_index.model()
+            source_index = proxy_model.mapToSource(model_index)
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            item = source_index.model().itemFromIndex(source_index)
+
+            is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+            if not is_folder:
+                # Run default action.
+                total_file_count += 1
+                sg_item = shotgun_model.get_sg_data(model_index)
+                # logger.info("--------->>>>>>  sg_item is: {}".format(sg_item))
+                have_rev = sg_item.get('haveRev', "0")
+                head_rev = sg_item.get('headRev', "0")
+                if self._to_sync(have_rev, head_rev):
+                    if 'path' in sg_item:
+                        local_path = sg_item['path'].get('local_path', None)
+                        if local_path:
+                            files_to_sync.append(local_path)
+
+        return files_to_sync, total_file_count
+
+    def _get_latest_revision(self, files_to_sync):
+        """
+        Get latest revision
+        """
+        progress_sum = 0
+        total = len(files_to_sync)
+        if total > 0:
+            for i, file_path in enumerate(files_to_sync):
+                progress_sum = ((i + 1) / total) * 100
+                p4_result = self._p4.run("sync", "-f", file_path + "#head")
+                logger.debug("Syncing file: {}".format(file_path))
+                msg = "({}/{})  Syncing file: {}".format(i+1, total, file_path)
+                self._add_log(msg, 3)
+                self._update_progress(progress_sum)
+
+    def _update_progress(self, value):
+        if 100 > value > 0:
+            self.ui.progress.setValue(value)
+            self.ui.progress.setVisible(True)
+        else:
+            self.ui.progress.setVisible(False)
+        #self.app.processEvents()
+        QtCore.QCoreApplication.processEvents()
+
+    def _add_log(self, msg, flag):
+        if flag <= 2:
+            msg = "\n {} \n".format(msg)
+        self.ui.log_window.append(msg)
+        if flag < 4:
+            logger.debug(msg)
+        self.ui.log_window.verticalScrollBar().setValue(self.ui.log_window.verticalScrollBar().maximum())
+        QtCore.QCoreApplication.processEvents()
+
+    def _to_sync (self, have_rev, head_rev):
+        """
+        Determine if we should sync the file
+        """
+        have_rev_int = int(have_rev)
+        head_rev_int = int(head_rev)
+        if head_rev_int > 0 and have_rev_int < head_rev_int:
+            return True
+        return False
+
+    def _connect(self):
+        """
+        Connect to Perforce.  If a connection can't be established with
+        the current settings then the connection UI will be shown.
+        """
+        try:
+            if not self._p4:
+                logger.debug("Connecting to perforce ...")
+                self._fw = sgtk.platform.get_framework("tk-framework-perforce")
+                self._p4 = self._fw.connection.connect()
+        except:
+            #Todo add error message
+            logger.debug("Failed to connect!")
+            raise
     ########################################################################################
     # cog icon actions
 
@@ -1139,6 +1294,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_model.hard_refresh()
         for p in self._entity_presets:
             self._entity_presets[p].model.hard_refresh()
+        self._get_perforce_summary()
 
     ########################################################################################
     # entity listing tree view and presets toolbar

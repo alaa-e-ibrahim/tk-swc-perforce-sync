@@ -15,7 +15,7 @@ from tank_vendor import six
 from .model_latestpublish import SgLatestPublishModel
 
 shotgun_model = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_model"
+    "tk-swc-framework-shotgunutils", "shotgun_model"
 )
 
 

@@ -15,10 +15,10 @@ from .model_latestpublish import SgLatestPublishModel
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_model"
+    "tk-swc-framework-shotgunutils", "shotgun_model"
 )
 shotgun_globals = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_globals"
+    "tk-swc-framework-shotgunutils", "shotgun_globals"
 )
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
@@ -26,6 +26,7 @@ from .ui.widget_publish_list import Ui_PublishListWidget
 from .delegate_publish import PublishWidget, PublishDelegate
 from . import model_item_data
 
+logger = sgtk.platform.get_logger(__name__)
 
 class PublishListWidget(PublishWidget):
     """
@@ -185,7 +186,9 @@ class SgPublishListDelegate(PublishDelegate):
         #  'version_number': 2}
 
         # Publish Name Version 002
+
         sg_data = shotgun_model.get_sg_data(model_index)
+        # logger.debug(">>>>>>>>>>>> _format_publish: sg_data: {}".format(sg_data))
         main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
 
         version = sg_data.get("version_number")
@@ -220,6 +223,12 @@ class SgPublishListDelegate(PublishDelegate):
             # When not in subfolders mode always show Task info
             # (similar to the logic in the thumbnail view, but always show)
             main_text += "  (Task %s)" % sg_data["task"]["name"]
+
+        if sg_data.get("revision") is not None:
+            revision = sg_data["revision"]
+            main_text += "<span style='color:#2C93E2'>  Revision: %s</span>" % (
+                revision
+            )
 
         # Quicktime by John Smith at 2014-02-23 10:34
         pub_type_str = shotgun_model.get_sanitized_data(

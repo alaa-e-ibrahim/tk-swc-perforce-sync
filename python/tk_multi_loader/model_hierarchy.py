@@ -11,7 +11,7 @@
 import sgtk
 
 shotgun_model = sgtk.platform.import_framework(
-    "tk-framework-shotgunutils", "shotgun_model"
+    "tk-swc-framework-shotgunutils", "shotgun_model"
 )
 
 SimpleShotgunHierarchyModel = shotgun_model.SimpleShotgunHierarchyModel
